@@ -5,7 +5,7 @@ import json
 import copy
 import random
 from loguru import logger
-from typing import Optional
+from typing import Any, Optional
 from pathlib import Path
 import asyncio
 
@@ -27,10 +27,14 @@ def generate_request_id() -> str:
     return f"pacore-{t.tm_year}-{t.tm_mon:02d}-{t.tm_mday:02d}-{t.tm_hour:02d}-{t.tm_min:02d}-{t.tm_sec:02d}-{uuid.uuid4()}"
 
 
-async def post_runtime_data(url: str, payload: dict, headers: dict) -> dict:
+async def post_runtime_data(url: str, payload: dict, headers: dict, *, timeout_seconds: float) -> dict:
     """Post request and return JSON response (non-streaming)."""
-    timeout = aiohttp.ClientTimeout(total=3000)
-    async with aiohttp.ClientSession(timeout=timeout, connector=aiohttp.TCPConnector(keepalive_timeout=0)) as session:
+    timeout = aiohttp.ClientTimeout(total=timeout_seconds)
+    async with aiohttp.ClientSession(
+        timeout=timeout,
+        connector=aiohttp.TCPConnector(keepalive_timeout=0),
+        trust_env=True,
+    ) as session:
         async with session.post(url, json=payload, headers=headers, ssl=False) as resp:
             if resp.status != 200:
                 raise aiohttp.ClientResponseError(
@@ -46,7 +50,7 @@ async def post_runtime_data(url: str, payload: dict, headers: dict) -> dict:
             return result
 
 
-async def post_streaming_data(url: str, payload: dict, headers: dict) -> dict:
+async def post_streaming_data(url: str, payload: dict, headers: dict, *, timeout_seconds: float) -> dict:
     """
     Post request with streaming response handling.
     Collects all SSE chunks and returns complete response.
@@ -56,13 +60,17 @@ async def post_streaming_data(url: str, payload: dict, headers: dict) -> dict:
 
     # Streaming timeout config
     timeout = aiohttp.ClientTimeout(
-        total=7200,
-        connect=60,
-        sock_connect=20,
-        sock_read=1000,
+        total=timeout_seconds,
+        connect=min(60, timeout_seconds),
+        sock_connect=min(20, timeout_seconds),
+        sock_read=min(1000, timeout_seconds),
     )
 
-    async with aiohttp.ClientSession(timeout=timeout, connector=aiohttp.TCPConnector(keepalive_timeout=0)) as session:
+    async with aiohttp.ClientSession(
+        timeout=timeout,
+        connector=aiohttp.TCPConnector(keepalive_timeout=0),
+        trust_env=True,
+    ) as session:
         async with session.post(url, json=payload, headers=headers, ssl=False) as resp:
             if resp.status != 200:
                 raise aiohttp.ClientResponseError(
@@ -143,6 +151,8 @@ async def async_chat_completion(
     timeout_seconds: float = 7200,
     retry_times: int = 5,
     stream: bool = False,
+    extra_headers: Optional[dict[str, str]] = None,
+    extra_body: Optional[dict[str, Any]] = None,
 ) -> dict:
     """Make async chat completion API call with retry."""
     payload = {
@@ -153,14 +163,18 @@ async def async_chat_completion(
     }
     if max_tokens is not None:
         payload["max_tokens"] = max_tokens
+    if extra_body:
+        payload.update(copy.deepcopy(extra_body))
 
     for attempt in range(retry_times):
         headers = {"Content-Type": "application/json", "X-Request-ID": generate_request_id()}
+        if extra_headers:
+            headers.update(extra_headers)
         try:
             if stream:
-                return await post_streaming_data(api_base, payload, headers)
+                return await post_streaming_data(api_base, payload, headers, timeout_seconds=timeout_seconds)
             else:
-                return await post_runtime_data(api_base, payload, headers)
+                return await post_runtime_data(api_base, payload, headers, timeout_seconds=timeout_seconds)
         except aiohttp.ClientResponseError as e:
             logger.warning(f"[{headers['X-Request-ID']}] API error {e.status}: {str(e.message)[:200]}")
             if e.status in [503, 502, 500]:
