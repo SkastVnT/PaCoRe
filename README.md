@@ -150,18 +150,95 @@ You can directly use `vllm serve` to serve the model! More inference details of 
 
 *Figure 3 | Inference pipeline of PaCoRe. Each round launches broad parallel exploration, compacts the resulting trajectories into compacted messages, and feeds these messages together with the question forward to coordinate the next round.  Repeating this process $\hat{R}$ times yields multi-million-token effective TTC while respecting fixed context limits, with the final compacted message serving as the system’s answer.*
 
+We will explain the PaCoRe inference pipeline in this section. 
+
 First, install this package:
 ```bash
 pip install -e . 
 ```
 
-Then, we assume you use vllm serve the model in your localhost with [PaCoRe-8B](https://huggingface.co/stepfun-ai/PaCoRe-8B) model.   
+#### PaCoRe Server Mode (Recommended)
+
+You can run PaCoRe as an OpenAI-compatible server that proxies requests through any upstream LLM provider (vLLM, OpenRouter, etc.) while applying the PaCoRe multi-round parallel reasoning pipeline.
+
+**Example: Using OpenRouter as the upstream provider**
+
+1. Set your OpenRouter API key:
+```bash
+export OPENROUTER_API_KEY='sk-or-...'
+```
+
+2. Start the PaCoRe server:
+```bash
+python playground/example_pacore_server_openrouter_step35_flash.py
+```
+
+3. Send requests to the server:
+```python
+import requests
+import json
+
+messages = [
+    {"role": "user", "content": "Prove that there are infinitely many prime numbers."}
+]
+
+response = requests.post(
+    url="http://localhost:8000/v1/chat/completions",
+    headers={"Content-Type": "application/json"},
+    data=json.dumps({
+        "model": "stepfun/step-3.5-flash:free",
+        "messages": messages,
+        "reasoning": {"enabled": True}
+    })
+)
+
+result = response.json()
+print(result["choices"][0]["message"]["content"])
+```
+
+**Configuration Options**
+
+The PaCoRe server can be configured via environment variables:
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `PACORE_UPSTREAM_API_BASE` | Upstream LLM endpoint URL | `http://localhost:8000/v1/chat/completions` |
+| `PACORE_HOST` | Server host address | `0.0.0.0` |
+| `PACORE_PORT` | Server port | `8000` |
+| `PACORE_UPSTREAM_TIMEOUT_SECONDS` | Request timeout | `7200` |
+| `PACORE_UPSTREAM_RETRY_TIMES` | Number of retries | `5` |
+
+**Customizing the Server**
+
+You can also create your own server by extending the `Exp` base class:
+
+```python
+from pacore.server.base_exp import ChatCompletionRequest, Exp
+
+class MyCustomServer(Exp):
+    upstream_api_base = "https://your-api-endpoint.com/v1/chat/completions"
+    num_responses_per_round = [16]  # PaCoRe breadth configuration
+
+    def get_upstream_extra_headers(self, request: ChatCompletionRequest) -> dict[str, str]:
+        return {"Authorization": f"Bearer {your_api_key}"}
+
+if __name__ == "__main__":
+    MyCustomServer().run()
+```
+
+The `num_responses_per_round` controls the PaCoRe inference trajectory:
+- `[4]` → PaCoRe-low
+- `[16]` → PaCoRe-medium 
+- `[32, 4]` → PaCoRe-high 
+
+### Batch Inference Example
+You can also run some data in a batch. 
+In this case, we assume you use vllm serve the model in your localhost with [PaCoRe-8B](https://huggingface.co/stepfun-ai/PaCoRe-8B) model.   
 
 Next, you can run our example inference code with PaCoRe-low inference setting:
-```
+```bash
 python playground/example_batch_inference_pacore_low_1210.py
 ```
-
 And then you can see dumped results in `outputs/example_batch_inference_pacore_low_1210/results.jsonl`!
 
 
