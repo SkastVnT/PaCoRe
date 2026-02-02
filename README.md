@@ -36,6 +36,11 @@ We open-source model checkpoints, training data, and the full inference pipeline
 
 ## 🔥 Releases 
 
+**[2026/02/03]** 🚀 **PaCoRe Server is now open source!** 
+* 🔗 Effortless to play PaCoRe with any LLM endpoint you have!
+* 🍻 Even better—we've added first-class support for [**Step 3.5 Flash**](https://github.com/stepfun-ai/Step-3.5-Flash) with [**OpenRouter free provider**](https://openrouter.ai/stepfun/step-3.5-flash:free), StepFun's blazing-fast flagship model!
+* 🎁 Check out the [Inference Pipeline](#inference-pipeline) section to get started!
+
 **[2025/12/09]** We are excited to release the **PaCoRe-8B** ecosystem:
 
 *   📝 **In-depth Technical Report:** [**PaCoRe: Learning to Scale Test-Time Compute with Parallel Coordinated Reasoning.**](https://github.com/stepfun-ai/PaCoRe/blob/main/pacore_report.pdf)
@@ -152,16 +157,18 @@ You can directly use `vllm serve` to serve the model! More inference details of 
 
 We will explain the PaCoRe inference pipeline in this section. 
 
-First, install this package:
-```bash
-pip install -e . 
-```
 
 #### PaCoRe Server Mode (Recommended)
 
 You can run PaCoRe as an OpenAI-compatible server that proxies requests through any upstream LLM provider (vLLM, OpenRouter, etc.) while applying the PaCoRe multi-round parallel reasoning pipeline.
 
 **Example: Using OpenRouter as the upstream provider**
+
+First, install this package:
+```bash
+pip install -e . 
+```
+Then do the following steps:
 
 1. Set your OpenRouter API key:
 ```bash
