@@ -264,6 +264,8 @@ We are just scratching the surface of parallel coordinated reasoning. Our roadma
 We are currently seeking self-motivated engineers and reseachers.
 If you are interested in our project and would like to contribute to the reasoner scale-up all the way to AGI, please feel free to reach out to us at hanqer@stepfun.com
 
+[![Star History Chart](https://api.star-history.com/svg?repos=stepfun-ai/PaCoRe&type=Timeline)](https://star-history.com/#stepfun-ai/PaCoRe&Timeline)
+
 ## 📜 Citation
 
 ```bibtex
