@@ -151,6 +151,7 @@ async def async_chat_completion(
     timeout_seconds: float = 7200,
     retry_times: int = 5,
     stream: bool = False,
+    tools: Optional[list[dict[str, Any]]] = None,
     extra_headers: Optional[dict[str, str]] = None,
     extra_body: Optional[dict[str, Any]] = None,
 ) -> dict:
@@ -161,6 +162,8 @@ async def async_chat_completion(
         "temperature": temperature,
         "top_p": top_p,
     }
+    if tools:
+        payload["tools"] = tools
     if max_tokens is not None:
         payload["max_tokens"] = max_tokens
     if extra_body:

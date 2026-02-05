@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import asyncio
 import copy
+import json
 import os
 import random
 import time
@@ -88,6 +89,7 @@ Original Problem:
 {{ original_content }}
 
 Reference Responses:
+Note: Some references may contain <tool_call> tags indicating tool calls the reference intended to make. These tool calls have NOT been executed - they are shown only as reference for your analysis.
 {% for response in ref_responses %}
 Reference {{ loop.index }}:
 {{ response }}
@@ -105,6 +107,7 @@ Original Tool Response:
 {{ original_content }}
 
 Reference Responses:
+Note: Some references may contain <tool_call> tags indicating tool calls the reference intended to make. These tool calls have NOT been executed - they are shown only as reference for your analysis.
 {% for response in ref_responses %}
 Reference {{ loop.index }}:
 {{ response }}
@@ -136,10 +139,48 @@ own comprehensive analysis and next steps.
         return {}
 
     @staticmethod
+    def _serialize_tool_calls(tool_calls: list[dict[str, Any]]) -> str:
+        """Serialize tool_calls into a readable, non-standard XML-ish format.
+
+        This is meant to be fed back as reference text in PaCoRe rounds. We do not
+        execute tool calls in this minimal server.
+        """
+        parts: list[str] = []
+        for tc in tool_calls:
+            func = tc.get("function") if isinstance(tc, dict) else None
+            if not isinstance(func, dict):
+                func = tc if isinstance(tc, dict) else {}
+            func_name = func.get("name", "unknown")
+            args: Any = func.get("arguments", {})
+
+            if isinstance(args, str):
+                try:
+                    args = json.loads(args)
+                except json.JSONDecodeError:
+                    args = {}
+
+            lines = ["<tool_call>", f"<function={func_name}>"]
+            if isinstance(args, dict):
+                for k, v in args.items():
+                    val = json.dumps(v, ensure_ascii=False) if isinstance(v, (dict, list)) else str(v)
+                    lines.extend([f"<parameter={k}>", val, "</parameter>"])
+            lines.extend(["</function>", "</tool_call>"])
+            parts.append("\n".join(lines))
+        return "\n".join(parts)
+
+    @staticmethod
     def _extract_answer(upstream_response: dict[str, Any]) -> str:
         choice = (upstream_response.get("choices") or [{}])[0]
         msg = choice.get("message") or {}
-        return (msg.get("content") or "").strip()
+        content = (msg.get("content") or "").strip()
+        tool_calls = msg.get("tool_calls") or []
+
+        parts: list[str] = []
+        if content:
+            parts.append(content)
+        if isinstance(tool_calls, list) and len(tool_calls) > 0:
+            parts.append(Exp._serialize_tool_calls(tool_calls))
+        return "\n".join(parts).strip()
 
     async def _call_upstream(
         self,
@@ -156,11 +197,13 @@ own comprehensive analysis and next steps.
             timeout_seconds=self.timeout_seconds,
             retry_times=self.retry_times,
             stream=self.upstream_stream,
+            tools=request.tools,
             extra_headers=self.get_upstream_extra_headers(request),
             extra_body=self.get_upstream_extra_body(request),
         )
 
     async def handle_chat_completions(self, request: ChatCompletionRequest) -> dict[str, Any]:
+        logger.debug(f"[chat_completions] request: {request}")
         t0 = time.time()
         rounds = self.num_responses_per_round + [1]
         request_id = uuid.uuid4().hex[:12]
@@ -191,16 +234,23 @@ own comprehensive analysis and next steps.
             async def _call_with_log(call_idx: int) -> dict[str, Any]:
                 upstream_model = self._resolve_model(request)
                 t_call = time.time()
+                log_dict = {
+                    "upstream_api_base": self.upstream_api_base,
+                    "req_id": request_id,
+                    "round": round_idx + 1,
+                    "call": f"{call_idx}/{num_calls}",
+                    "model": upstream_model,
+                    "len(messages)": len(messages),
+                    "temperature": request.temperature or self.temperature,
+                    "top_p": request.top_p or self.top_p,
+                    "max_tokens": request.max_tokens or self.max_tokens,
+                    "tools": request.tools,
+                    "stream": self.upstream_stream,
+                }
                 logger.info(
-                    "[upstream_call] "
-                    f"upstream_api_base={self.upstream_api_base} "
-                    f"req={request_id} round={round_idx + 1}/{len(rounds)} call={call_idx}/{num_calls} "
-                    f"model={upstream_model!r} messages={len(messages)} "
-                    f"temperature={request.temperature or self.temperature} "
-                    f"top_p={request.top_p or self.top_p} "
-                    f"max_tokens={request.max_tokens or self.max_tokens} "
-                    f"stream={self.upstream_stream}"
+                    f"[upstream_call] " + " ".join([f"{k}={v}" for k, v in log_dict.items()]),
                 )
+                logger.debug(f"messages:\n{messages}")
                 try:
                     resp = await self._call_upstream(request, messages.copy())
                 except Exception as exc:
