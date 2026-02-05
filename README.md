@@ -57,8 +57,11 @@ We open-source model checkpoints, training data, and the full inference pipeline
 <thead>
   <tr>
     <th class="tg-header"></th>
+    <th class="tg-data">AIME 2025</th>
     <th class="tg-data">HMMT 2025</th>
-    <th class="tg-data">LiveCodeBench (2408-2505)</th>
+    <th class="tg-data">IMO AnswerBench</th>
+    <th class="tg-data">Apex</th>
+    <th class="tg-data">LiveCodeBench</th>
     <th class="tg-data">HLE<sub>text</sub></th>
     <th class="tg-data">MultiChallenge</th>
   </tr>
@@ -66,43 +69,61 @@ We open-source model checkpoints, training data, and the full inference pipeline
 <tbody>
   <tr>
     <td class="tg-header">GPT-5</td>
+    <td class="tg-data">93.5 (13k)</td>
     <td class="tg-data">93.2 (16k)</td>
+    <td class="tg-data">72.9 (26k)</td>
+    <td class="tg-data">1.0 (33k)</td>
     <td class="tg-data"><b>83.5</b> (13k)</td>
     <td class="tg-data"><b>26.0</b> (14k)</td>
     <td class="tg-data"><b>71.1</b> (5.0k)</td>
   </tr>
   <tr>
     <td class="tg-header">Qwen3-235B-Thinking</td>
+    <td class="tg-data">91.6 (26k)</td>
     <td class="tg-data">82.3 (32k)</td>
+    <td class="tg-data">71.7 (34k)</td>
+    <td class="tg-data"><b>3.3</b> (46k)</td>
     <td class="tg-data">74.5 (21k)</td>
     <td class="tg-data">18.2 (23k)</td>
     <td class="tg-data">60.3 (1.6k)</td>
   </tr>
   <tr>
     <td class="tg-header">GLM-4.6</td>
+    <td class="tg-data">92.3 (20k)</td>
     <td class="tg-data">88.7 (25k)</td>
+    <td class="tg-data">73.5 (37k)</td>
+    <td class="tg-data">0.7 (53k)</td>
     <td class="tg-data">79.5 (19k)</td>
     <td class="tg-data">17.2 (21k)</td>
     <td class="tg-data">54.9 (2.2k)</td>
   </tr>
   <tr>
-    <td class="tg-header">DeepSeek-v3.1-Terminus</td>
+    <td class="tg-header">DeepSeek-v3.1<sup>*</sup></td>
+    <td class="tg-data">90.2 (16k)</td>
     <td class="tg-data">86.1 (20k)</td>
+    <td class="tg-data">63.0 (27k)</td>
+    <td class="tg-data">1.4 (36k)</td>
     <td class="tg-data">74.9 (11k)</td>
     <td class="tg-data">19.3 (18k)</td>
     <td class="tg-data">54.4 (1.1k)</td>
   </tr>
   <tr class="tg-midrule">
     <td class="tg-header">Kimi-K2-Thinking</td>
+    <td class="tg-data"><b>95.3</b> (25k)</td>
     <td class="tg-data">86.5 (33k)</td>
+    <td class="tg-data">76.5 (44k)</td>
+    <td class="tg-data">0.8 (60k)</td>
     <td class="tg-data">79.2 (25k)</td>
     <td class="tg-data">23.9 (29k)</td>
-    <td class="tg-data">66.4 (1.7k)</td>
+    <td class="tg-data">66.4 (1.6k)</td>
   </tr>
 
   <tr class="tg-midrule">
     <td class="tg-header">RLVR-8B</td>
+    <td class="tg-data">84.1 (50k)</td>
     <td class="tg-data">75.4 (48k)</td>
+    <td class="tg-data">64.6 (56k)</td>
+    <td class="tg-data">0.0 (65k)</td>
     <td class="tg-data">70.6 (34k)</td>
     <td class="tg-data">9.3 (35k)</td>
     <td class="tg-data">33.3 (1.7k)</td>
@@ -110,29 +131,38 @@ We open-source model checkpoints, training data, and the full inference pipeline
 
   <tr>
     <td class="tg-header"><b>PaCoRe-8B (low)</b></td>
-    <td class="tg-data">88.2 (243k)</td>
+    <td class="tg-data">89.7 (255k)</td>
+    <td class="tg-data">88.1 (243k)</td>
+    <td class="tg-data">76.1 (306k)</td>
+    <td class="tg-data">0.7 (362k)</td>
     <td class="tg-data">75.8 (188k)</td>
     <td class="tg-data">13.0 (196k)</td>
     <td class="tg-data">41.8 (13k)</td>
   </tr>
   <tr>
     <td class="tg-header"><b>PaCoRe-8B (medium)</b></td>
+    <td class="tg-data">92.5 (908k)</td>
     <td class="tg-data">92.9 (869k)</td>
+    <td class="tg-data">77.3 (1080k)</td>
+    <td class="tg-data">1.4 (1280k)</td>
     <td class="tg-data">76.7 (659k)</td>
     <td class="tg-data">14.6 (694k)</td>
     <td class="tg-data">45.7 (45k)</td>
   </tr>
   <tr class="tg-bottom">
     <td class="tg-header"><b>PaCoRe-8B (high)</b></td>
+    <td class="tg-data">93.7 (1873k)</td>
     <td class="tg-data"><b>94.5</b> (1796k)</td>
+    <td class="tg-data"><b>78.4</b> (2258k)</td>
+    <td class="tg-data">2.3 (2679k)</td>
     <td class="tg-data">78.2 (1391k)</td>
-    <td class="tg-data">16.2 (1451k)</td>
-    <td class="tg-data">47.0 (95k)</td>
+    <td class="tg-data">16.0 (1451k)</td>
+    <td class="tg-data">48.0 (95.3k)</td>
   </tr>
 </tbody>
 </table>
 
-*Table 1 | For each benchmark, we report accuracy together with total TTC (in thousands). For *Low*, *Medium*, and *High*, we apply the inference trajectory configuration as $\vec{K}=[4]$, $[16]$, and $[32, 4]$ separately.*
+*Table 1 | For each benchmark, we report accuracy together with total TTC (in thousands). For *Low*, *Medium*, and *High*, we apply the inference trajectory configuration as $\vec{K}=[4]$, $[16]$, and $[32, 4]$ separately.\* DeepSeek-V3.1 refers to the Terminus version.*
 
 
 ### Key Findings
